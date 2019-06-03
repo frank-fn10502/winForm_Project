@@ -1,0 +1,203 @@
+#include "StdAfx.h"
+#include "Graph.h"
+
+/*----------------------------vertex-------------------------------------*/
+
+Graph::Vertex::Vertex(int name ,int dfn ,int low ,int num)
+{
+	this->name = name;
+	this->dfn = dfn;
+	this->low = low;
+
+	vertexLabel = gcnew Label();
+	vertexLabel->AllowDrop = true;
+	vertexLabel->BorderStyle = BorderStyle::FixedSingle;
+	vertexLabel->Font = (gcnew System::Drawing::Font(L"·L³n¥¿¶ÂÅé",9.75F ,FontStyle::Bold ,GraphicsUnit::Point ,136) ); 
+	vertexLabel->Location = System::Drawing::Point(20 ,20);///¼È®É
+	vertexLabel->Margin = System::Windows::Forms::Padding(0);
+	vertexLabel->Name = "vertexLabel" + num;
+	vertexLabel->Size = System::Drawing::Size(26, 20);
+	vertexLabel->Text = name.ToString();
+	vertexLabel->TextAlign = ContentAlignment::MiddleCenter;
+
+	labelMove = gcnew LabelMove();/////
+	vertexLabel->MouseDown += gcnew MouseEventHandler(this->labelMove ,&Graph::Vertex::LabelMove::label_MouseDown);	
+	vertexLabel->MouseUp   += gcnew MouseEventHandler(this->labelMove ,&Graph::Vertex::LabelMove::label_MouseUp);
+	vertexLabel->MouseMove += gcnew MouseEventHandler(this->labelMove ,&Graph::Vertex::LabelMove::label_MouseMove);	
+}
+void Graph::Vertex::setOriginalLabelPos(int x ,int y)
+{
+	this->labelCenterX = x;
+	this->labelCenterY = y;
+	this->labelX = x - vertexLabel->Size.Width  / 2;
+	this->labelY = y - vertexLabel->Size.Height / 2;
+
+	vertexLabel->Location = System::Drawing::Point(labelX ,labelY);
+}
+Point Graph::Vertex::getVertexCenterPoint()
+{
+	return Point( vertexLabel->Location.X + vertexLabel->Size.Width  / 2 
+				, vertexLabel->Location.Y + vertexLabel->Size.Height / 2 );
+}
+/*----------------------------LabelMove-------------------------------------*/
+
+Graph::Vertex::LabelMove::LabelMove()
+{
+	 Focus = false;
+}
+System::Void Graph::Vertex::LabelMove::label_MouseDown(Object^ sender ,MouseEventArgs^  e)
+{
+	 if( !updating )
+	 {
+		Focus	 = true;
+		updating = true;
+		mouseOriginalX = Cursor::Position.X;
+		mouseOriginalY = Cursor::Position.Y;
+
+		labelOriginalX = ((Label^)sender)->Location.X;
+		labelOriginalY = ((Label^)sender)->Location.Y;
+	 }
+}
+System::Void Graph::Vertex::LabelMove::label_MouseUp(Object^  sender ,MouseEventArgs^  e)
+{
+	Focus	 = false;
+	updating = false;
+}
+System::Void Graph::Vertex::LabelMove::label_MouseMove(Object^  sender ,MouseEventArgs^  e)
+{
+	 if( updating )
+	 {
+		((Label^)sender)->Location = System::Drawing::Point( labelOriginalX + (Cursor::Position.X - mouseOriginalX)
+														   , labelOriginalY + (Cursor::Position.Y - mouseOriginalY) );
+	 }	
+}
+/*----------------------------Edge--------------------------------------*/
+
+Graph::EdgeEntity::EdgeEntity(array<Vertex^>^% vertex ,Graphics^% myGraph)
+{
+	this->vertex = vertex;
+	edge = gcnew array<int,2>(20,20);
+
+	this->myGraph = myGraph;
+	
+	PenNormal = gcnew Pen(Color::Black ,2);
+	PenFocus  = gcnew Pen(Color::Aqua ,2);
+
+	drawEdge_Timer = gcnew Timer();
+	drawEdge_Timer->Interval = 50;
+	drawEdge_Timer->Tick += gcnew System::EventHandler(this ,&Graph::EdgeEntity::DrawEdge);
+
+	oneMorePaint = true;
+}
+System::Void Graph::EdgeEntity::DrawEdge(Object^  sender ,EventArgs^  e)
+{
+	if( Vertex::LabelMove::isUpDating() || oneMorePaint ) 
+	{
+		myGraph->Clear(Color::White);
+		Pen^ myPen;
+		for(int i = 0 ; i < Vertex::vertexNum ; i++ )
+		{
+			for(int j = i ; j < Vertex::vertexNum ; j++ )
+			{
+				if( edge[ i ,j ] == 1 )
+				{
+					if(vertex[i]->labelMove->isFocus() || 
+					   vertex[j]->labelMove->isFocus() ) 
+					{
+						 myPen = PenFocus;
+					}
+					else myPen = PenNormal;
+
+					myGraph->DrawLine(myPen ,vertex[i]->getVertexCenterPoint() ,vertex[j]->getVertexCenterPoint() );
+				}
+			}
+		}
+		if( !Vertex::LabelMove::isUpDating()  && oneMorePaint )		 oneMorePaint = false;
+		else if( Vertex::LabelMove::isUpDating()  && !oneMorePaint ) oneMorePaint = true;
+	}
+}
+/*----------------------------Graph-------------------------------------*/
+
+Graph::Graph(Graphics^% myGraph)
+{
+	vertex	   = gcnew array<Vertex^>(20);
+	edgeEntity = gcnew EdgeEntity(vertex ,myGraph);
+
+	artPoints  = gcnew LinkList<int>();
+}
+void Graph::displayVertexOnBoard(Panel^% canvas)
+{
+	double degree = 360.0 / Vertex::vertexNum;
+	int midX = canvas->Size.Width  / 2;
+	int midY = canvas->Size.Height / 2;
+	double angel;
+
+	for(int i = 0 ; i < Vertex::vertexNum ; i++ )
+	{
+		canvas->Controls->Add(vertex[i]->vertexLabel);
+		angel = (degree*i) * (Math::PI / 180.0);
+		/*
+		vertex[i]->setLabelPos( midX + (Vertex::R * Math::Cos(angel) )
+							  , midY - (Vertex::R * Math::Sin(angel) ) );*/
+		
+		vertex[i]->setOriginalLabelPos( midX + Vertex::R * Math::Sin(angel)
+									  , midY - Vertex::R * Math::Cos(angel) );
+	}
+}
+void Graph::displayEdgeOnBoard()
+{
+	edgeEntity->drawEdge_Timer->Enabled = true;
+}
+void Graph::clearAllData()
+{
+	edgeEntity->myGraph->Clear(Color::White);
+	edgeEntity->drawEdge_Timer->Enabled = false;
+}
+LinkList<int>^ Graph::calulateArtPoint(int start)
+{
+	int n = 0;
+
+	calulateDfnLow(start ,-1 ,n ,start);
+	return artPoints;
+}
+/*--------------------private----------------------------------------*/
+
+void Graph::calulateDfnLow(int u,int v ,int& n ,int start)
+{
+	n++;
+	vertex[u]->dfn = vertex[u]->low = n;
+	int child = 0;/////
+
+	for(int w = 0 ; w < Vertex::vertexNum ; w++ )
+	{
+		if( edgeEntity->edge[u ,w] == 1)
+		{
+			if( vertex[w]->dfn == 0)
+			{
+				child++;/////
+				calulateDfnLow(w ,u ,n ,start);
+				vertex[u]->low = min(vertex[u]->low ,vertex[w]->low );
+
+				if( u == start )
+				{
+					if( child == 2)
+						artPoints->insert(vertex[u]->name);
+				}
+				else if(vertex[w]->low >= vertex[u]->dfn)
+				{
+					if( child == 2 )
+					{
+						if( !artPoints->isExist(u) )
+							artPoints->insert(vertex[u]->name);
+					}
+					else artPoints->insert(vertex[u]->name);				
+				}
+			}
+			else if( w != v )
+			{
+				vertex[u]->low = min(vertex[u]->low ,vertex[w]->dfn );
+			}
+		}
+	}
+}
+

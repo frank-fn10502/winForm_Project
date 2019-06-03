@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ArticulationPonit", "ArticulationPonit\ArticulationPonit.vcproj", "{30710046-70C6-46BD-9318-6246AC37A578}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{30710046-70C6-46BD-9318-6246AC37A578}.Debug|Win32.ActiveCfg = Debug|Win32
+		{30710046-70C6-46BD-9318-6246AC37A578}.Debug|Win32.Build.0 = Debug|Win32
+		{30710046-70C6-46BD-9318-6246AC37A578}.Release|Win32.ActiveCfg = Release|Win32
+		{30710046-70C6-46BD-9318-6246AC37A578}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

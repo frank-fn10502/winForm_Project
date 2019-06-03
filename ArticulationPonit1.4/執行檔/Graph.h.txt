@@ -1,0 +1,100 @@
+#pragma once
+#include "LinkList.h"
+
+
+using namespace System;
+using namespace System::Windows::Forms;
+using namespace System::Drawing;
+
+ref class Graph
+{
+private:
+	ref struct Vertex
+	{
+		static int vertexNum = 0;
+		int name;
+		int dfn;
+		int low;
+
+		Label^ vertexLabel;
+		static int R = 100;
+		int labelCenterX ,labelCenterY;
+		int labelX;
+		int labelY;
+
+		ref class LabelMove
+		{
+			static bool updating  = false;
+			static int  mouseOriginalX = 0 ,mouseOriginalY = 0;
+			static int  labelOriginalX = 0 ,labelOriginalY = 0;
+
+			bool Focus;
+		public:
+			LabelMove();
+
+			static bool	 isUpDating(){ return updating; }
+			bool		 isFocus()	 { return Focus;    }		
+			System::Void label_MouseDown(Object^  sender ,MouseEventArgs^  e);
+			System::Void label_MouseUp(Object^  sender, MouseEventArgs^  e) ;
+			System::Void label_MouseMove(Object^  sender ,MouseEventArgs^  e);
+
+		}^labelMove;
+
+		Vertex(int ,int ,int ,int);
+
+		void  setOriginalLabelPos(int ,int);
+		Point getVertexCenterPoint();
+	};
+	array<Vertex^>^ vertex;
+
+	/*-----------------------------*/
+	ref struct EdgeEntity
+	{
+		array<Vertex^>^ vertex;
+		array<int,2>^ edge;
+
+		Graphics^ myGraph;
+		Pen^ PenNormal;
+		Pen^ PenFocus;
+		Timer^ drawEdge_Timer;
+		bool oneMorePaint;
+
+		EdgeEntity(array<Vertex^>^% vertex ,Graphics^%);
+
+		void DrawEdge(Object^ sender, EventArgs^ e);/////
+
+	}^edgeEntity;
+	/*-----------------------------*/
+	LinkList<int>^ artPoints;
+public:
+	Graph(Graphics^%);
+
+	void setVertex(int n)
+	{
+		Vertex::vertexNum = n;
+		for(int i = 0 ; i < n ; i++)
+		{
+			vertex[i] = gcnew Vertex(i ,0 ,0 ,(i+1) );
+		}
+	}
+	void setEdge(int row,int column,int n){ edgeEntity->edge[row ,column] = n; }
+
+	/*-----------------------------*/
+	String^ getVertexName(int i){ return vertex[i]->name.ToString(); }
+	int getVertexNum() { return Vertex::vertexNum; }
+	int getDfn(int n){ return vertex[n]->dfn; }
+	int getLow(int n){ return vertex[n]->low; }
+	/*-----------------------------*/
+
+	int getEdge(int row ,int column){ return edgeEntity->edge[row ,column]; }
+
+	void displayVertexOnBoard(Panel^% );/////
+	void displayEdgeOnBoard();/////
+	void clearAllData();
+
+	LinkList<int>^ calulateArtPoint(int);	
+
+private:
+	void calulateDfnLow(int ,int ,int& ,int);
+	int min(int a ,int b){ return (a <= b) ? a : b; }
+};
